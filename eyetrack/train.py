@@ -49,7 +49,7 @@ if __name__ == '__main__':
     writer = SummaryWriter()
     mymodule = MyModule()
     mymodule = mymodule.to(device)  # 模型转移GPU
-    loss = torch.nn.CrossEntropyLoss()
+    loss = torch.nn.z()
     learn_step = 0.01
     optim = torch.optim.SGD(mymodule.parameters(), lr=learn_step)
     epoch = 1000
@@ -61,11 +61,13 @@ if __name__ == '__main__':
         train_step = 0
         for data in train_dataloader:
             imgs, targets = data
-
+            print(imgs.shape, targets.shape)
+            # to GPU
             imgs = imgs.to(device)
             targets = targets.to(device)
-
-            outputs = mymodule(imgs)
+            # model
+            outputs = mymodule(imgs)    # forward infer
+            print(outputs.shape)
             result_loss = loss(outputs, targets)
             optim.zero_grad()
             result_loss.backward()
@@ -87,9 +89,7 @@ if __name__ == '__main__':
                 label = label.to(device)
 
                 outputs_ = mymodule(imgs)
-
                 test_result_loss = loss(outputs_, label)
-
                 right_number += (outputs_.argmax(1) == label).sum()
 
             # writer.add_scalar("在测试集上的准确率",(right_number/test_len),(i+1))
