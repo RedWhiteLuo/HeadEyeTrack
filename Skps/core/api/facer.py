@@ -20,7 +20,7 @@ def get_cfg():
 
 class FaceAna:
 
-    def __init__(self, verbose=False):
+    def __init__(self):
 
         cfg = get_cfg()
 
@@ -77,7 +77,6 @@ class FaceAna:
 
     def to_dict(self, bboxes, kps, states):
         ans = []
-
         for i in range(len(bboxes)):
             one_res = {'box': bboxes[i], 'kps': kps[i], "scores": states[i]}
             ans.append(one_res)
@@ -87,8 +86,8 @@ class FaceAna:
         """
         diff value for two value,
         determin if to excute the detection
-        :param previous_frame:  RGB array
-        :param image:           RGB array
+        :param previous_frame:  RGB_array
+        :param image:           RGB_array
         :return:                True or False
         """
         if previous_frame is None:
@@ -104,11 +103,11 @@ class FaceAna:
                 return False
 
     def sort_and_filter(self, bboxes):
-        '''
+        """
         find the top_k max bboxes, and filter the small face
         :param bboxes:
         :return:
-        '''
+        """
 
         if len(bboxes) < 1:
             return []
@@ -125,24 +124,24 @@ class FaceAna:
             sorted_bboxes = bboxes
         return np.array(sorted_bboxes)
 
-    def judge_boxs(self, previuous_bboxs, now_bboxs):
-        '''
+    def judge_boxs(self, previous_bboxs, now_bboxs):
+        """
         function used to calculate the tracking bboxes
-        :param previuous_bboxs:[[x1,y1,x2,y2],... ]
+        :param previous_bboxs:[[x1,y1,x2,y2],... ]
         :param now_bboxs: [[x1,y1,x2,y2],... ]
         :return:
-        '''
+        """
 
         def iou(rec1, rec2):
 
-            # computing area of each rectangles
+            # computing area of each rectangle
             S_rec1 = (rec1[2] - rec1[0]) * (rec1[3] - rec1[1])
             S_rec2 = (rec2[2] - rec2[0]) * (rec2[3] - rec2[1])
 
             # computing the sum_area
             sum_area = S_rec1 + S_rec2
 
-            # find the each edge of intersect rectangle
+            # find the edge of intersect rectangle
             x1 = max(rec1[0], rec2[0])
             y1 = max(rec1[1], rec2[1])
             x2 = min(rec1[2], rec2[2])
@@ -153,15 +152,15 @@ class FaceAna:
 
             return intersect / (sum_area - intersect)
 
-        if previuous_bboxs is None:
+        if previous_bboxs is None:
             return now_bboxs
 
         result = []
         for i in range(now_bboxs.shape[0]):
             contain = False
-            for j in range(previuous_bboxs.shape[0]):
-                if iou(now_bboxs[i], previuous_bboxs[j]) > self.iou_thres:
-                    result.append(self.smooth(now_bboxs[i], previuous_bboxs[j]))
+            for j in range(previous_bboxs.shape[0]):
+                if iou(now_bboxs[i], previous_bboxs[j]) > self.iou_thres:
+                    result.append(self.smooth(now_bboxs[i], previous_bboxs[j]))
                     contain = True
                     break
             if not contain:
@@ -174,11 +173,11 @@ class FaceAna:
         return self.filter(now_box[:4], previous_box[:4])
 
     def reset(self):
-        '''
+        """
         reset the previous info used foe tracking,
 
         :return:
-        '''
+        """
         self.track_box = None
         self.previous_image = None
         self.previous_box = None
