@@ -82,7 +82,6 @@ class FaceAna:
         """
         diff value for two value,
         determin if to excute the detection
-
         :param previous_frame:  RGB array
         :param image:           RGB array
         :return:                True or False

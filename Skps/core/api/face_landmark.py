@@ -87,7 +87,7 @@ class FaceLandmark:
     def post_process(self, landmark, detail):
         """
         Args:
-            landmark: get face img landmark coords
+            landmark: landmark coords in face img
             detail:
             [h-{origin face img}, w-{origin face img}, bbox[1]-{TOP_Y}, bbox[0]-{LEFT_X}, add-{img expand pixel}]
         Returns:

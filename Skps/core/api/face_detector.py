@@ -1,6 +1,5 @@
 import pathlib
 import time
-
 import cv2
 import numpy as np
 import os
@@ -48,13 +47,13 @@ class FaceDetector:
         h, w, c = resize_img.shape
         dh = (self.input_size[0] - h) / 2
         dw = (self.input_size[1] - w) / 2
-        " make sure round(0.5) + round(0.5) > 1 "
+        " make sure round(0.5) + round(0.5) = 1 "
         top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
         left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
         img = cv2.copyMakeBorder(resize_img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)  # add border
         # convert img format
         img = img.transpose(2, 0, 1).astype(np.float16)     # convert to [C,W,H]
-        img /= 255.0  # 0 - 255 to 0.0 - 1.0
+        img /= 255.0
         img = np.expand_dims(img, axis=0)
 
         return img, [scale, left, top]
