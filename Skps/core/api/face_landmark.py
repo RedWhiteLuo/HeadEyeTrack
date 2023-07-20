@@ -5,7 +5,7 @@ import numpy as np
 import pathlib
 import os
 from openvino.runtime import Core
-from Skps.logger import logger
+from Skps.logger.logger import logger
 
 
 class FaceLandmark:
@@ -81,7 +81,7 @@ class FaceLandmark:
         # resize the face img to model require
         h, w, _ = crop_image.shape
         crop_image = cv2.resize(crop_image, (self.input_size[1], self.input_size[0]))
-        # cv2.imshow('i am watching u * * %d' % i, crop_image)
+
         return crop_image, [h, w, bbox[1], bbox[0], add]
 
     def post_process(self, landmark, detail):

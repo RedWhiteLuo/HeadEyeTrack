@@ -14,7 +14,7 @@ class Kalman:
         self.kalman.processNoiseCov = np.array([[1, 0, 0, 0],
                                                 [0, 1, 0, 0],
                                                 [0, 0, 1, 0],
-                                                [0, 0, 0, 1]], np.float32) * 0.0  # 噪声
+                                                [0, 0, 0, 1]], np.float32) * 0.02  # 噪声
         self.last_measurement = None
         self.last_prediction = None
 

@@ -40,7 +40,12 @@ class FaceAna:
         logger.info('model init done!')
 
     def run(self, image):
-
+        """
+        Args:
+            image:  get [H, W, C]
+        Returns:
+            dict [:98]{kps : [x,y], scores : num }
+        """
         # run detector
         if self.diff_frames(self.previous_image, image):  # if same
             boxes = self.face_detector(image)  # get the bounding box of each people
@@ -61,12 +66,12 @@ class FaceAna:
         # refine the bboxes
         track = []
         for i in range(landmarks.shape[0]):
-            track.append([np.min(landmarks[i][:, 0]), np.min(landmarks[i][:, 1]), np.max(landmarks[i][:, 0]),
+            track.append([np.min(landmarks[i][:, 0]),
+                          np.min(landmarks[i][:, 1]),
+                          np.max(landmarks[i][:, 0]),
                           np.max(landmarks[i][:, 1])])
         tmp_box = np.array(track)
-
         self.track_box = self.judge_boxs(boxes_return, tmp_box)
-
         result = self.to_dict(self.track_box, landmarks, states)
         return result
 
@@ -91,7 +96,6 @@ class FaceAna:
         else:
 
             _diff = cv2.absdiff(previous_frame, image)
-
             diff = np.sum(_diff) / previous_frame.shape[0] / previous_frame.shape[1] / 3.
 
             if diff > self.diff_thres:
