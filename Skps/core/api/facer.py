@@ -39,7 +39,7 @@ class FaceAna:
         self.filter = EmaFilter(self.alpha)
         logger.info('model init done!')
 
-    def run(self, image):
+    def run(self, image: object) -> object:
         """
         Args:
             image:  get [H, W, C]
