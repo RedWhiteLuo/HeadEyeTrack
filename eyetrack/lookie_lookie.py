@@ -13,11 +13,11 @@ pyautogui.PAUSE = 0
 pyautogui.FAILSAFE = False
 saved_img_index = 0
 global_eye_img, global_cursor_position = 0, 0
-from torch.nn import Conv2d, MaxPool2d, Flatten, Sequential, Dropout, Conv1d, Sigmoid, ReLU
+from torch.nn import Conv2d, MaxPool2d, Flatten, Sequential, Dropout, Conv1d, Sigmoid, ReLU, Linear, MaxUnpool2d
 from torch.utils.tensorboard import SummaryWriter
 from DataLoader import DL
 
-train_img, train_coords = DL('../dataset', batch_size=512)
+train_img, train_coords = DL('../dataset', batch_size=1024)
 batch_num = train_img.size()[0]
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
@@ -48,18 +48,16 @@ class EyeTrack(nn.Module):
         self.model = Sequential(
             # in-> [N, 3, 32, 128]
             Conv2d(3, 20, kernel_size=(5, 5), padding=2),  # keep W H
-            #   -> [N, 20, 32, 128] # 提取特征
-            Conv2d(20, 20, kernel_size=(2, 2), stride=(2, 2), padding=0),
-            #   -> [N, 20, 16, 64]  # 降噪
-            ReLU(),  # 非线性激活
-            Conv2d(20, 2, kernel_size=(13, 49), padding=0),  # keep W H
-            #   -> [N, 2, 4, 16]
-            Flatten(2, 3),
-            #   -> [N, 2, 64]
-            Conv1d(2, 2, 64),
-            #   -> [N, 2, 1]
-            Flatten(1, 2),
-            # out -> [N,2]
+            #   -> [N, 20, 32, 128] #
+            ReLU(),
+            MaxPool2d(kernel_size=(2, 2)),
+            #   -> [N, 20, 16, 64]  #
+            Conv2d(20, 20, kernel_size=(5, 5), padding=2),  # keep W H
+            ReLU(),
+            #   -> [N, 20, 16, 64]
+            Flatten(1, 3),
+            #   -> [N, 20480]
+            Linear(20480, 2)
         )
 
     def forward(self, x):
@@ -68,17 +66,16 @@ class EyeTrack(nn.Module):
 
 
 def train():
-    learn_step = 0.0001
+    learn_step = 0.01
     epoch_num = 10000
     model = EyeTrack().to(device)
-    loss = torch.nn.CrossEntropyLoss()
+    loss = torch.nn.MSELoss()
     optim = torch.optim.SGD(model.parameters(), lr=learn_step)
     writer = SummaryWriter('./logs')
     model.train()  # 模型在训练状态
     trained_batch_num = 0
     try:
-        for i in range(epoch_num):
-            print("第{}轮训练".format(i + 1))
+        for epoch in range(epoch_num):
             for batch in range(batch_num):
                 batch_img = train_img[batch].to(device)
                 batch_coords = train_coords[batch].to(device)
@@ -90,6 +87,7 @@ def train():
                 optim.step()
                 trained_batch_num += 1
                 writer.add_scalar("loss", result_loss.item(), trained_batch_num)
+                print(epoch + 1, trained_batch_num, result_loss.item())
     except KeyboardInterrupt:
         pass
     torch.save(model, "ET.pt")
@@ -104,17 +102,18 @@ def run():
     torch.no_grad()
     while True:
         img = get_eye_img()
-        img = torch.from_numpy(np.array(img)).float()
+        img = np.array(img)
+        img = torch.from_numpy(img).float()
         img = img.to(device)
         outputs_ = model(img)
-        x = int(outputs_[0][0] * 192)
-        y = int(outputs_[0][1] * 108)
+        x = int(outputs_[0][0] * 1920)
+        y = int(outputs_[0][1] * 1080)
         pyautogui.moveTo(x, y)
         print(x, y)
 
 
 if __name__ == '__main__':
-    train()
+    run()
     # 在测试集上面的效果
     """mymodule.eval()  # 在验证状态
     test_total_loss = 0

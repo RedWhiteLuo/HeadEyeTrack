@@ -20,7 +20,7 @@ def DL(path, batch_size=64):
             img = cv2.imread(str(path) + "/" + str(file_name))  # [H, W, C] format
             img = img.transpose((2, 0, 1))
             img = img / 255     # [C, H, W] format
-            coords = [int(file_name.split('_')[1]), int(file_name.split('_')[2][:-4])]     # [x, y]
+            coords = [int(file_name.split('_')[1]) / 1920, int(file_name.split('_')[2][:-4]) / 1080]     # [x, y]
             batch_img.append(img)
             batch_coords.append(coords)
         epoch_img.append(batch_img)
