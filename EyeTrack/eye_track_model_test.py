@@ -61,9 +61,10 @@ def get_eye_img():
             return eye_img
 
 
-class EyeTrack(nn.Module):
+class EyeTrackModelStruct(nn.Module):
     def __init__(self):
         super().__init__()
+        # TODO(prof.redwhite@gmail.com): change model structure
         self.model = Sequential(
             # in-> [N, 3, 32, 128]
             Conv2d(3, 20, kernel_size=(5, 5), padding=2),  # keep W H
@@ -80,47 +81,45 @@ class EyeTrack(nn.Module):
             Flatten(1, 3),
             #   -> [N, 20480]
             Linear(20480, 2)
+            # out-> [N, 2]
         )
-
-    def forward(self, x):
-        x = self.model(x)
-        return x
 
 
 def train():
-    learn_step = 0.01
-    epoch_num = 500
-    model = EyeTrack().to(device)
+    learn_step, epoch_num, trained_batch_num = 0.01, 500, 0
+    model = EyeTrackModelStruct().to(device)
+    model.train()
     loss = torch.nn.MSELoss()
     optim = torch.optim.SGD(model.parameters(), lr=learn_step)
     writer = SummaryWriter('./logs')
-    model.train()  # 模型在训练状态
-    trained_batch_num = 0
     try:
         for epoch in range(epoch_num):
             for batch in range(batch_num):
                 batch_img = train_img[batch].to(device)
                 batch_coords = train_coords[batch].to(device)
-                # model
-                outputs = model(batch_img)  # forward infer
+                # infer and calculate loss
+                outputs = model(batch_img)
                 result_loss = loss(outputs, batch_coords)
+                # reset grad and calculate grad then optim model
                 optim.zero_grad()
                 result_loss.backward()
                 optim.step()
+                # save loss and print info
                 trained_batch_num += 1
                 writer.add_scalar("loss", result_loss.item(), trained_batch_num)
                 print(epoch + 1, trained_batch_num, result_loss.item())
     except KeyboardInterrupt:
         pass
+    # save model
     torch.save(model, "ET.pt")
-    print("model saved!")
     writer.close()
+    print("[Finish!] model saved!")
 
 
 def run():
+    # TODO(prof.redwhite@gmail.com): convert model to openvino format and infer
     model = torch.load("ET.pt")
-    model.eval()  # 在验证状态
-    right_number = 0
+    model.eval()
     torch.no_grad()
     while True:
         img = get_eye_img()
@@ -136,24 +135,3 @@ def run():
 
 if __name__ == '__main__':
     train()
-    # 在测试集上面的效果
-    """mymodule.eval()  # 在验证状态
-    test_total_loss = 0
-    right_number = 0
-    with torch.no_grad():  # 验证的部分，不是训练所以不要带入梯度
-        for test_data in test_dataloader:
-            imgs, label = test_data
-
-            imgs = imgs.to(device)
-            label = label.to(device)
-
-            outputs_ = mymodule(imgs)
-            test_result_loss = loss(outputs_, label)
-            right_number += (outputs_.argmax(1) == label).sum()
-
-        # writer.add_scalar("在测试集上的准确率",(right_number/test_len),(i+1))
-        print("第{}轮训练在测试集上的准确率为{}".format((i + 1), (right_number / test_len)))"""
-
-"""
-https://blog.csdn.net/FUTEROX/article/details/122724634
-"""
