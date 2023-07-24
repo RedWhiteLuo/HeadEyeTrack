@@ -2,10 +2,13 @@ import cv2
 import time
 import numpy as np
 import pyautogui
-from Skps.core.api.facer import FaceAna
+from FaceLandmark.core.api.facer import FaceAna
 
 facer = FaceAna()
 vide_capture = cv2.VideoCapture(0)
+vide_capture.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+vide_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+
 pyautogui.PAUSE = 0
 pyautogui.FAILSAFE = False
 saved_img_index = 0

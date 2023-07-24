@@ -3,16 +3,16 @@ import pathlib
 import cv2
 import numpy as np
 import yaml
-from Skps.core.api.face_detector import FaceDetector
-from Skps.core.api.face_landmark import FaceLandmark
-from Skps.core.smoother.lk import GroupTrack, EmaFilter
-from Skps.logger import logger
+from FaceLandmark.core.api.face_detector import FaceDetector
+from FaceLandmark.core.api.face_landmark import FaceLandmark
+from FaceLandmark.core.smoother.lk import GroupTrack, EmaFilter
+from FaceLandmark.logger import logger
 
 
 def get_cfg():
     root_path = pathlib.Path(__file__).resolve().parents[2]
     print(root_path)
-    cfg_path = os.path.join(root_path, 'config', 'Skps.yml')
+    cfg_path = os.path.join(root_path, 'config.yml')
     with open(cfg_path, encoding="UTF-8") as f:
         cfg = yaml.load(f, Loader=yaml.FullLoader)
     return cfg
@@ -24,18 +24,18 @@ class FaceAna:
 
         cfg = get_cfg()
 
-        self.face_detector = FaceDetector(cfg['Skps']['Detect'])
-        self.face_landmark = FaceLandmark(cfg['Skps']['Keypoints'])
-        self.trace = GroupTrack(cfg['Skps']['Trace'])
+        self.face_detector = FaceDetector(cfg['Detect'])
+        self.face_landmark = FaceLandmark(cfg['Keypoints'])
+        self.trace = GroupTrack(cfg['Trace'])
         # another thread should run detector in a slow way and update the track_box
         self.track_box = None
         self.previous_image = None
         self.previous_box = None
         self.diff_thres = 5
-        self.top_k = cfg['Skps']['Detect']['topk']
-        self.min_face = cfg['Skps']['Detect']['min_face']
-        self.iou_thres = cfg['Skps']['Trace']['iou_thres']
-        self.alpha = cfg['Skps']['Trace']['smooth_box']
+        self.top_k = cfg['Detect']['topk']
+        self.min_face = cfg['Detect']['min_face']
+        self.iou_thres = cfg['Trace']['iou_thres']
+        self.alpha = cfg['Trace']['smooth_box']
         self.filter = EmaFilter(self.alpha)
         logger.info('model init done!')
 

@@ -5,7 +5,7 @@ import numpy as np
 import pathlib
 import os
 from openvino.runtime import Core
-from Skps.logger.logger import logger
+from FaceLandmark.logger.logger import logger
 
 
 class FaceLandmark:

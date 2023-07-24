@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import os
 from openvino.runtime import Core
-from Skps.logger.logger import logger
+from FaceLandmark.logger.logger import logger
 
 
 class FaceDetector:
