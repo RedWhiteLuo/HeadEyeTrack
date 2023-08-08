@@ -22,7 +22,7 @@ def save_img_and_coords(img, coords):
     saved_img_index += 1
 
 
-def return_eye_bbox(eye_bbox):
+def return_boundary(eye_bbox):
     max_index = np.argmax(eye_bbox, axis=0)
     min_index = np.argmin(eye_bbox, axis=0)
     left, top = eye_bbox[min_index[0]][0], eye_bbox[min_index[1]][1]
@@ -34,6 +34,9 @@ if __name__ == '__main__':
     while True:
         ret, image = vide_capture.read()
         image = cv2.flip(image, 1)
+        black_img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        cv2.imshow('img', black_img)
+        cv2.waitKey(1)
         if ret:
             # start infer and count time
             star = time.perf_counter()
@@ -60,8 +63,8 @@ if __name__ == '__main__':
                     color = (0, 255, 0) if kp_score > 0.85 else (0, 0, int(255 * kp_score))
                     cv2.circle(image, (kp_coords[0], kp_coords[1]), color=color, radius=2, thickness=1)"""
                 # left / right eye coords -> eye_img
-                l_l, l_r, l_t, l_b = return_eye_bbox(face_kp[60:68])
-                r_l, r_r, r_t, r_b = return_eye_bbox(face_kp[68:76])
+                l_l, l_r, l_t, l_b = return_boundary(face_kp[60:68])
+                r_l, r_r, r_t, r_b = return_boundary(face_kp[68:76])
                 left_eye_img = image[int(l_t):int(l_b), int(l_l):int(l_r)]
                 right_eye_img = image[int(r_t):int(r_b), int(r_l):int(r_r)]
                 left_eye_img = cv2.resize(left_eye_img, (64, 32), interpolation=cv2.INTER_AREA)

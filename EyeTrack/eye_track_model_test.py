@@ -4,10 +4,10 @@ import cv2
 import numpy as np
 import pyautogui
 from FaceLandmark.core.api.facer import FaceAna
-from face_landmark_demo import return_eye_bbox
-from torch.nn import Conv2d, MaxPool2d, Flatten, Sequential, ReLU, Linear, LeakyReLU, Softplus
+from face_landmark_demo import return_boundary
+from torch.nn import Conv2d, MaxPool2d, Flatten, Sequential, ReLU, Linear, LeakyReLU, Dropout
 from torch.utils.tensorboard import SummaryWriter
-from EyeTrack.DataLoader import DL
+from Tools.DataLoader import DL
 from Tools.kalman_filter import Kalman
 import win32gui, win32ui
 from win32api import GetSystemMetrics
@@ -32,8 +32,6 @@ saved_img_index = 0
 global_eye_img, global_cursor_position = 0, 0
 kmf = Kalman()
 
-train_img, train_coords = DL('../dataset', batch_size=512)
-batch_num = train_img.size()[0]
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 
@@ -46,8 +44,8 @@ def get_eye_img():
         result = facer.run(image)
         for face_index in range(len(result)):
             face_kp, face_kp_score = result[face_index]['kps'], result[face_index]['scores']
-            l_l, l_r, l_t, l_b = return_eye_bbox(face_kp[60:68])
-            r_l, r_r, r_t, r_b = return_eye_bbox(face_kp[68:76])
+            l_l, l_r, l_t, l_b = return_boundary(face_kp[60:68])
+            r_l, r_r, r_t, r_b = return_boundary(face_kp[68:76])
             left_eye_img = image[int(l_t):int(l_b), int(l_l):int(l_r)]
             right_eye_img = image[int(r_t):int(r_b), int(r_l):int(r_r)]
             left_eye_img = cv2.resize(left_eye_img, (64, 32), interpolation=cv2.INTER_AREA)
@@ -68,24 +66,30 @@ class EyeTrackModelStruct(nn.Module):
         self.model = Sequential(
             # in-> [N, 3, 32, 128]
             Conv2d(3, 20, kernel_size=(5, 5), padding=2),  # keep W H
-            #   -> [N, 20, 32, 128] #
-            MaxPool2d(kernel_size=(2, 2)),
-            #   -> [N, 20, 16, 64]  #
-            Softplus(),
-            Conv2d(20, 5, kernel_size=(5, 5), padding=2),  # keep W H
             LeakyReLU(),
-            Conv2d(5, 5, kernel_size=(3, 3), padding=1),  # keep W H
+            #   -> [N, 20, 32, 128] #
+            MaxPool2d(kernel_size=(2, 2), stride=(2, 2)),
+            #   -> [N, 20, 16, 64]  #
+            Conv2d(20, 20, kernel_size=(5, 5), padding=2),  # keep W H
+            LeakyReLU(),
+            Conv2d(20, 10, kernel_size=(3, 3), padding=1),  # keep W H
             ReLU(),
-            Conv2d(5, 20, kernel_size=(5, 5), padding=2),  # keep W H
-            #   -> [N, 20, 16, 64]
+            #   -> [N, 10, 16, 64]
             Flatten(1, 3),
+            Dropout(0.1),
             #   -> [N, 20480]
-            Linear(20480, 2)
+            Linear(10240, 2)
             # out-> [N, 2]
         )
 
+    def forward(self, x):
+        x = self.model(x)
+        return x
+
 
 def train():
+    train_img, train_coords = DL('E:/AI_Dataset/0Project/HeadEyeTrackt', batch_size=512)
+    batch_num = train_img.size()[0]
     learn_step, epoch_num, trained_batch_num = 0.01, 500, 0
     model = EyeTrackModelStruct().to(device)
     model.train()
