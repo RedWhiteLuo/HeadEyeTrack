@@ -1,17 +1,18 @@
-import torch
-from torch import nn
 import cv2
 import numpy as np
 import pyautogui
-from FaceLandmark.core.api.facer import FaceAna
-from face_landmark_demo import return_boundary
+import torch
+import win32gui
+import win32ui
+from torch import nn
 from torch.nn import Conv2d, MaxPool2d, Flatten, Sequential, ReLU, Linear, LeakyReLU, Dropout
 from torch.utils.tensorboard import SummaryWriter
-from Tools.DataLoader import DL
-from Tools.kalman_filter import Kalman
-import win32gui, win32ui
 from win32api import GetSystemMetrics
 
+from FaceLandmark.core.api.facer import FaceAna
+from Facelandmark import return_eye_img
+from Tools.DataLoader import DataLoader
+from Tools.kalman_filter import Kalman
 
 dc = win32gui.GetDC(0)
 dcObj = win32ui.CreateDCFromHandle(dc)
@@ -29,7 +30,6 @@ vide_capture = cv2.VideoCapture(0)
 pyautogui.PAUSE = 0
 pyautogui.FAILSAFE = False
 saved_img_index = 0
-global_eye_img, global_cursor_position = 0, 0
 kmf = Kalman()
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -44,13 +44,7 @@ def get_eye_img():
         result = facer.run(image)
         for face_index in range(len(result)):
             face_kp, face_kp_score = result[face_index]['kps'], result[face_index]['scores']
-            l_l, l_r, l_t, l_b = return_boundary(face_kp[60:68])
-            r_l, r_r, r_t, r_b = return_boundary(face_kp[68:76])
-            left_eye_img = image[int(l_t):int(l_b), int(l_l):int(l_r)]
-            right_eye_img = image[int(r_t):int(r_b), int(r_l):int(r_r)]
-            left_eye_img = cv2.resize(left_eye_img, (64, 32), interpolation=cv2.INTER_AREA)
-            right_eye_img = cv2.resize(right_eye_img, (64, 32), interpolation=cv2.INTER_AREA)
-            eye_img = np.concatenate((left_eye_img, right_eye_img), axis=1)
+            eye_img = return_eye_img(image, face_kp)
             cv2.imshow('eye_img', eye_img)
             cv2.waitKey(1)
             eye_img = eye_img.transpose((2, 0, 1))
@@ -62,7 +56,6 @@ def get_eye_img():
 class EyeTrackModelStruct(nn.Module):
     def __init__(self):
         super().__init__()
-        # TODO(prof.redwhite@gmail.com): change model structure
         self.model = Sequential(
             # in-> [N, 3, 32, 128]
             Conv2d(3, 20, kernel_size=(5, 5), padding=2),  # keep W H
@@ -88,7 +81,7 @@ class EyeTrackModelStruct(nn.Module):
 
 
 def train():
-    train_img, train_coords = DL('E:/AI_Dataset/0Project/HeadEyeTrackt', batch_size=512)
+    train_img, train_coords = DataLoader('E:/AI_Dataset/0Project/HeadEyeTrack', batch_size=512)
     batch_num = train_img.size()[0]
     learn_step, epoch_num, trained_batch_num = 0.01, 500, 0
     model = EyeTrackModelStruct().to(device)
@@ -112,30 +105,32 @@ def train():
                 trained_batch_num += 1
                 writer.add_scalar("loss", result_loss.item(), trained_batch_num)
                 print(epoch + 1, trained_batch_num, result_loss.item())
+            if epoch//5 == 0:
+                torch.save(model, "ET-" + str(epoch) + ".pt")
     except KeyboardInterrupt:
         pass
     # save model
-    torch.save(model, "ET.pt")
+    torch.save(model, "ET-last.pt")
     writer.close()
     print("[Finish!] model saved!")
 
 
 def run():
-    # TODO(prof.redwhite@gmail.com): convert model to openvino format and infer
-    model = torch.load("ET.pt")
+    model = torch.load("ET-last.pt")
     model.eval()
     torch.no_grad()
     while True:
         img = get_eye_img()
-        img = np.array(img)
-        img = torch.from_numpy(img).float()
-        img = img.to(device)
-        outputs_ = model(img)
-        x = int(outputs_[0][0] * 1920)
-        y = int(outputs_[0][1] * 1080)
-        (x, y) = kmf.Position_Predict(x, y)
-        draw_rect([int(x), int(y)])
+        if img:
+            img = np.array(img)
+            img = torch.from_numpy(img).float()
+            img = img.to(device)
+            outputs_ = model(img)
+            x = int(outputs_[0][0] * 1920)
+            y = int(outputs_[0][1] * 1080)
+            (x, y) = kmf.Position_Predict(x, y)
+            draw_rect([int(x), int(y)])
 
 
 if __name__ == '__main__':
-    train()
+    run()

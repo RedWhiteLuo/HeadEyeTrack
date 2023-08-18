@@ -2,14 +2,8 @@
 import cv2
 import numpy as np
 
-from Tools.kalman_filter import Kalman as KM
 
-rotation_vector_filter = [KM(), KM(), KM()]
-vector_2d_filter = KM()
-
-
-def calculate_face_vector(points):
-    size = (480, 640)
+def calculate_face_vector(points, size):
     dist_coeffs = np.zeros((4, 1))  # Assuming no lens distortion
 
     # 2D image points. If you change the image, you need to change vector
@@ -62,7 +56,6 @@ def calculate_face_vector(points):
     p2 = [int(nose_end_point2D[0][0][0]), int(nose_end_point2D[0][0][1])]
     # KM filter
     rela_p = [p2[i] - p1[i] for i in range(2)]
-    rela_p = vector_2d_filter.Position_Predict(rela_p[0], rela_p[1])
     p2_filter = [int(p1[i] + rela_p[i]) for i in range(2)]
     # limit data len
     rotation_vector[0] += 3.2

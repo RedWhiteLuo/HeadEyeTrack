@@ -11,7 +11,6 @@ from FaceLandmark.logger import logger
 
 def get_cfg():
     root_path = pathlib.Path(__file__).resolve().parents[2]
-    print(root_path)
     cfg_path = os.path.join(root_path, 'config.yml')
     with open(cfg_path, encoding="UTF-8") as f:
         cfg = yaml.load(f, Loader=yaml.FullLoader)
@@ -39,7 +38,7 @@ class FaceAna:
         self.filter = EmaFilter(self.alpha)
         logger.info('model init done!')
 
-    def run(self, image: object) -> object:
+    def run(self, image: object):
         """
         Args:
             image:  get [H, W, C]

@@ -5,7 +5,7 @@ import numpy as np
 import torch
 
 
-def DL(path, batch_size=64):
+def DataLoader(path, batch_size=64):
     # path = "./dataset"  # 文件夹目录
     epoch_img, epoch_coords = [], []
     all_file_name = os.listdir(path)  # get all file name -> list
