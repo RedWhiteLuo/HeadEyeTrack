@@ -21,7 +21,7 @@ monitor = (0, 0, GetSystemMetrics(0), GetSystemMetrics(1))
 
 
 def draw_rect(coords):
-    dcObj.Rectangle((coords[0]-5, coords[1]-5, coords[0] + 5, coords[1] + 5))
+    dcObj.Rectangle((coords[0]-3, coords[1]-3, coords[0] + 3, coords[1] + 3))
     win32gui.InvalidateRect(hwnd, monitor, True)  # Refresh the entire monitor
 
 
@@ -37,9 +37,6 @@ device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cp
 
 def get_eye_img():
     ret, image = vide_capture.read()
-    cv2.imshow('face_img', image)
-    cv2.waitKey(1)
-    image = cv2.flip(image, 1)
     if ret:
         result = facer.run(image)
         for face_index in range(len(result)):
