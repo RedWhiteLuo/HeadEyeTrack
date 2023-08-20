@@ -5,13 +5,12 @@ import numpy as np
 import pathlib
 import os
 from openvino.runtime import Core
-from FaceLandmark.logger.logger import logger
 
 
 class FaceLandmark:
 
     def __init__(self, cfg):
-        root_path = pathlib.Path(__file__).resolve().parents[2]
+        root_path = pathlib.Path(__file__).resolve().parents[1]
         model_path_xml = os.path.join(root_path, cfg['model_path_xml'])
         self.model = Core().compile_model(model_path_xml, "GPU.0")
         self.output_node = self.model.outputs
@@ -45,7 +44,7 @@ class FaceLandmark:
 
         if len(bboxes) > 0:
             duration = time.perf_counter() - t0
-            logger.info('[Keypoint] %.5fs per face' % (duration / len(bboxes)))
+            print('[Keypoint] %.5fs per face' % (duration / len(bboxes)))
 
         return np.array(landmark_result), np.array(states_result)
 
@@ -78,7 +77,7 @@ class FaceLandmark:
         # crop the face
         bbox = bbox.astype(np.int32)
         crop_image = border_img[bbox[1]:bbox[3], bbox[0]:bbox[2], :]
-        # resize the face img to Model require
+        # resize the face img to model require
         h, w, _ = crop_image.shape
         crop_image = cv2.resize(crop_image, (self.input_size[1], self.input_size[0]))
 

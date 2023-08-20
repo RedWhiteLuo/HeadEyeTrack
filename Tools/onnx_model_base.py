@@ -1,7 +1,6 @@
 import onnxruntime as rt
 
 
-#
 class ONNXEngine:
     def __init__(self, onnx_model_path, device='cuda'):
         self.device = device

@@ -4,12 +4,11 @@ import cv2
 import numpy as np
 import os
 from openvino.runtime import Core
-from FaceLandmark.logger.logger import logger
 
 
 class FaceDetector:
     def __init__(self, cfg):
-        root_path = pathlib.Path(__file__).resolve().parents[2]
+        root_path = pathlib.Path(__file__).resolve().parents[1]
         model_path_xml = os.path.join(root_path, cfg['model_path_xml'])
         self.model = Core().compile_model(model_path_xml, "GPU.0")
         self.output_node = self.model.outputs[0]
@@ -34,16 +33,16 @@ class FaceDetector:
         bboxes = self.py_nms(output, self.iou_thrs, self.score_thrs)
         bboxes[:, :4] = self.scale_coords(bboxes[:, :4], recover_info)
         duration = time.perf_counter() - start_time
-        logger.info('[Face] Total time: %.5fs' % duration)
+        print('[Face] Total time: %.5fs' % duration)
         return bboxes
 
     def preprocess(self, image, color=(114, 114, 114)):
         origin_img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        # resize origin img to Model input required size
+        # resize origin img to model input required size
         h, w, c = origin_img.shape
         scale = min(self.input_size[0] / h, self.input_size[1] / w)
         resize_img = cv2.resize(origin_img, (int(w * scale), int(h * scale)))
-        # fill img if ratio not fit Model
+        # fill img if ratio not fit model
         h, w, c = resize_img.shape
         dh = (self.input_size[0] - h) / 2
         dw = (self.input_size[1] - w) / 2

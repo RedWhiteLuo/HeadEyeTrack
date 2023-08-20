@@ -3,15 +3,14 @@ import pathlib
 import cv2
 import numpy as np
 import yaml
-from FaceLandmark.core.api.face_detector import FaceDetector
-from FaceLandmark.core.api.face_landmark import FaceLandmark
-from FaceLandmark.core.smoother.lk import GroupTrack, EmaFilter
-from FaceLandmark.logger import logger
+from FaceLandmark.core.face_detector import FaceDetector
+from FaceLandmark.core.face_landmark import FaceLandmark
+from Tools.lk import GroupTrack, EmaFilter
 
 
 def get_cfg():
-    root_path = pathlib.Path(__file__).resolve().parents[2]
-    cfg_path = os.path.join(root_path, 'config.yml')
+    root_path = pathlib.Path(__file__).resolve().parents[1]
+    cfg_path = os.path.join(root_path, './config.yml')
     with open(cfg_path, encoding="UTF-8") as f:
         cfg = yaml.load(f, Loader=yaml.FullLoader)
     return cfg
@@ -36,7 +35,7 @@ class FaceAna:
         self.iou_thres = cfg['Trace']['iou_thres']
         self.alpha = cfg['Trace']['smooth_box']
         self.filter = EmaFilter(self.alpha)
-        # logger.info('Model init done!')
+        # logger.info('model init done!')
 
     def run(self, image: object):
         """

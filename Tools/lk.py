@@ -4,8 +4,10 @@ import numpy as np
 import math
 
 
-class GroupTrack():
+class GroupTrack:
     def __init__(self, cfg):
+        self.alpha = None
+        self.previous_dx = None
         self.old_frame = None
         self.previous_landmarks_set = None
 
@@ -38,7 +40,7 @@ class GroupTrack():
                         filtered_res = self.smooth(now_landmarks_set[i] / scale,
                                                    self.previous_landmarks_set[j] / scale,
                                                    self.previous_dx[j] / scale) * scale
-                        # filtered_res[stay_indx]=self.previous_landmarks_set[j][stay_indx]
+                        # filtered_res[stay_index]=self.previous_landmarks_set[j][stay_index]
                         result.append(filtered_res)
                         previous_dx.append(self.previous_landmarks_set[j] - filtered_res)
                         not_in_flag = False
@@ -54,18 +56,19 @@ class GroupTrack():
 
         return result
 
-    def iou(self, p_set0, p_set1):
+    @staticmethod
+    def iou(p_set0, p_set1):
         rec1 = [np.min(p_set0[:, 0]), np.min(p_set0[:, 1]), np.max(p_set0[:, 0]), np.max(p_set0[:, 1])]
         rec2 = [np.min(p_set1[:, 0]), np.min(p_set1[:, 1]), np.max(p_set1[:, 0]), np.max(p_set1[:, 1])]
 
-        # computing area of each rectangles
+        # computing area of each rectangle
         S_rec1 = (rec1[2] - rec1[0]) * (rec1[3] - rec1[1])
         S_rec2 = (rec2[2] - rec2[0]) * (rec2[3] - rec2[1])
 
         # computing the sum_area
         sum_area = S_rec1 + S_rec2
 
-        # find the each edge of intersect rectangle
+        # find the edge of intersect rectangle
         x1 = max(rec1[0], rec2[0])
         y1 = max(rec1[1], rec2[1])
         x2 = min(rec1[2], rec2[2])
@@ -78,9 +81,9 @@ class GroupTrack():
 
     def smooth(self, now_landmarks, previous_landmarks, previous_df):
 
-        filtered_landmarkd = self.filter(now_landmarks, previous_landmarks, previous_df)
+        filtered_landmark = self.filter(now_landmarks, previous_landmarks, previous_df)
 
-        return filtered_landmarkd
+        return filtered_landmark
 
     def do_moving_average(self, p_now, p_previous):
         p = self.alpha * p_now + (1 - self.alpha) * p_previous
@@ -106,6 +109,7 @@ class OneEuroFilter:
         """Initialize the one euro filter."""
         # The parameters.
 
+        self.dx0 = dx0
         self.min_cutoff = min_cutoff
         self.beta = beta
         self.d_cutoff = d_cutoff
@@ -119,8 +123,8 @@ class OneEuroFilter:
 
         dx = np.sqrt(np.sum((x - x_prev) ** 2, axis=1))
 
-        ## switch to distance
-        dx_prev = np.sqrt(np.sum((dx_prev) ** 2, axis=1))
+        # switch to distance
+        dx_prev = np.sqrt(np.sum(dx_prev ** 2, axis=1))
 
         dx_hat = exponential_smoothing(a_d, dx, dx_prev)
         # The filtered signal.
@@ -130,8 +134,8 @@ class OneEuroFilter:
 
         a = np.expand_dims(a, -1)
 
-        keep_indx = dx < 0.002
-        a[keep_indx] = 0.01
+        keep_index = dx < 0.002
+        a[keep_index] = 0.01
 
         x_hat = exponential_smoothing(a, x, x_prev)
 
@@ -141,7 +145,7 @@ class OneEuroFilter:
         return x_hat
 
 
-class EmaFilter():
+class EmaFilter:
     def __init__(self, alpha):
         self.alpha = alpha
 

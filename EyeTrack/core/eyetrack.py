@@ -1,7 +1,5 @@
-import random
 import cv2
 import numpy as np
-import pyautogui
 import torch
 import win32gui
 import win32ui
@@ -9,29 +7,15 @@ from torch import nn
 from torch.nn import Conv2d, MaxPool2d, Flatten, Sequential, ReLU, Linear, LeakyReLU, Dropout
 from torch.utils.tensorboard import SummaryWriter
 from win32api import GetSystemMetrics
-from FaceLandmark.core.api.facer import FaceAna
-from facelandmark import return_eye_img
+from FaceLandmark.core.facer import FaceAna
 from Tools.dataloader import EpochDataLoader
 from Tools.kalman_filter import Kalman
+from facelandmark import trim_eye_img
 
 
 def draw_rect(coords):
     dcObj.Rectangle((coords[0] - 3, coords[1] - 3, coords[0] + 3, coords[1] + 3))
     win32gui.InvalidateRect(hwnd, monitor, True)  # Refresh the entire monitor
-
-
-dc = win32gui.GetDC(0)
-dcObj = win32ui.CreateDCFromHandle(dc)
-hwnd = win32gui.WindowFromPoint((0, 0))
-monitor = (0, 0, GetSystemMetrics(0), GetSystemMetrics(1))
-
-facer = FaceAna()
-vide_capture = cv2.VideoCapture(0)
-pyautogui.PAUSE = 0
-pyautogui.FAILSAFE = False
-kmf = Kalman()
-
-device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 
 def get_eye_img():
@@ -40,7 +24,7 @@ def get_eye_img():
         result = facer.run(image)
         for face_index in range(len(result)):
             face_kp, face_kp_score = result[face_index]['kps'], result[face_index]['scores']
-            eye_img = return_eye_img(image, face_kp)
+            eye_img = trim_eye_img(image, face_kp)
             cv2.imshow('eye_img', eye_img)
             cv2.waitKey(1)
             eye_img = eye_img.transpose((2, 0, 1))
@@ -49,7 +33,7 @@ def get_eye_img():
             return eye_img
 
 
-class EyeTrackModelStruct(nn.Module):
+class EyeTrackModel(nn.Module):
     def __init__(self):
         super().__init__()
         self.model = Sequential(
@@ -79,10 +63,10 @@ def train():
     train_img, train_coords = EpochDataLoader('E:/AI_Dataset/0Project/HeadEyeTrack', batch_size=512)
     batch_num = train_img.size()[0]
     learn_step, epoch_num, trained_batch_num = 0.01, 500, 0
-    model = EyeTrackModelStruct().to(device).train()
+    model = EyeTrackModel().to(device).train()
     loss = torch.nn.MSELoss()
     optim = torch.optim.SGD(model.parameters(), lr=learn_step)
-    writer = SummaryWriter('./logs')
+    writer = SummaryWriter('../train_logs')
     for epoch in range(epoch_num):
         for batch in range(batch_num):
             batch_img = train_img[batch].to(device)
@@ -90,7 +74,7 @@ def train():
             # infer and calculate loss
             outputs = model(batch_img)
             result_loss = loss(outputs, batch_coords)
-            # reset grad and calculate grad then optim Model
+            # reset grad and calculate grad then optim model
             optim.zero_grad()
             result_loss.backward()
             optim.step()
@@ -99,18 +83,20 @@ def train():
             writer.add_scalar("loss", result_loss.item(), trained_batch_num)
             print(epoch + 1, trained_batch_num, result_loss.item())
         if epoch // 5 == 0:
-            torch.save(model, "ET-" + str(epoch) + ".pt")
-    # save Model
-    torch.save(model, "Model/ET-last.pt")
+            torch.save(model, "../model/ET-" + str(epoch) + ".pt")
+    # save model
+    torch.save(model, "../model/ET-last.pt")
     writer.close()
-    print("[SUCCEED!] Model saved!")
+    print("[SUCCEED!] model saved!")
 
 
 def run():
-    model = torch.load("Model/ET-last.pt").eval()
+    km_filter = Kalman()
+    model = torch.load("../model/ET-last.pt").eval()
     torch.no_grad()
     while True:
-        img = get_eye_img()
+        # img = get_eye_img()
+        img = cv2.imread("E:/AI_Dataset/0Project/HeadEyeTrack/0_1419_23.png")
         if img is not None:
             img = np.array(img)
             img = torch.from_numpy(img).float()
@@ -118,11 +104,23 @@ def run():
             outputs_ = model(img)
             x = int(outputs_[0][0] * 1920)
             y = int(outputs_[0][1] * 1080)
-            (x, y) = kmf.Position_Predict(x, y)
+            (x, y) = km_filter.Position_Predict(x, y)
             draw_rect([int(x), int(y)])
         else:
             print("[ERROR] something wrong when trying to get eye img")
 
 
 if __name__ == '__main__':
+    # draw rectangle on screen
+    dc = win32gui.GetDC(0)
+    dcObj = win32ui.CreateDCFromHandle(dc)
+    hwnd = win32gui.WindowFromPoint((0, 0))
+    monitor = (0, 0, GetSystemMetrics(0), GetSystemMetrics(1))
+    # initialize
+    facer = FaceAna()
+    vide_capture = cv2.VideoCapture(0)
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    # train or eval
     train()
+
+"""benchmark_app -m ET-last-INT8.xml -d CPU -api async"""

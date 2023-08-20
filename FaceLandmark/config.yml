@@ -1,7 +1,7 @@
 Detect:
-  model_path: 'pretrain_model/yolov5n-0.5.onnx'
-  model_path_xml: 'pretrain_model/yolov5n-0.5.xml'
-  model_path_bin: 'pretrain_model/yolov5n-0.5.bin'
+  model_path: 'model/yolov5n-0.5.onnx'
+  model_path_xml: 'model/yolov5n-0.5.xml'
+  model_path_bin: 'model/yolov5n-0.5.bin'
   input_shape: [ 384,640,3 ]
   topk: 5
   min_face: 1600
@@ -9,9 +9,9 @@ Detect:
   iou_thrs: 0.3
 
 Keypoints:
-  model_path: 'pretrain_model/kps_student.onnx'
-  model_path_xml: 'pretrain_model/kps_student.xml'
-  model_path_bin: 'pretrain_model/kps_student.bin'
+  model_path: 'model/kps_student.onnx'
+  model_path_xml: 'model/kps_student.xml'
+  model_path_bin: 'model/kps_student.bin'
   num_points: 98
   base_extend_range: [ 0.2,0.3 ]
   input_shape: [ 256,256,3 ]

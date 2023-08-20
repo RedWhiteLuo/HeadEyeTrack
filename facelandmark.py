@@ -1,10 +1,10 @@
 import argparse
 import cv2
 import time
-import numpy as np
 import pyautogui
-from FaceLandmark.core.api.facer import FaceAna
+from FaceLandmark.core.facer import FaceAna
 from Tools.head_vector import calculate_face_vector
+from Tools.process_data import trim_eye_img, save_img_and_coords
 
 facer = FaceAna()
 HEIGHT, WEIGHT = 1920, 1080
@@ -13,30 +13,6 @@ vide_capture.set(cv2.CAP_PROP_FRAME_WIDTH, HEIGHT)
 vide_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, WEIGHT)
 pyautogui.PAUSE = 0
 pyautogui.FAILSAFE = False
-
-
-def save_img_and_coords(img, coords, saved_img_index):
-    save_path = './dataset/' + '%d_%d_%d.png' % (saved_img_index, coords[0], coords[1])
-    cv2.imwrite(save_path, img)
-    saved_img_index += 1
-
-
-def return_boundary(eye_bbox):
-    max_index = np.argmax(eye_bbox, axis=0)
-    min_index = np.argmin(eye_bbox, axis=0)
-    left, top = eye_bbox[min_index[0]][0], eye_bbox[min_index[1]][1]
-    right, down = eye_bbox[max_index[0]][0], eye_bbox[max_index[1]][1]
-    return left - 2, right + 2, top - 2, down + 2
-
-
-def return_eye_img(image, face_kp):
-    l_l, l_r, l_t, l_b = return_boundary(face_kp[60:68])
-    r_l, r_r, r_t, r_b = return_boundary(face_kp[68:76])
-    left_eye_img = image[int(l_t):int(l_b), int(l_l):int(l_r)]
-    right_eye_img = image[int(r_t):int(r_b), int(r_l):int(r_r)]
-    left_eye_img = cv2.resize(left_eye_img, (64, 32), interpolation=cv2.INTER_AREA)
-    right_eye_img = cv2.resize(right_eye_img, (64, 32), interpolation=cv2.INTER_AREA)
-    return np.concatenate((left_eye_img, right_eye_img), axis=1)
 
 
 def run(
@@ -62,7 +38,7 @@ def run(
             # process per face key points data
             for face_index in range(len(result)):
                 face_kp, face_kp_score = result[face_index]['kps'], result[face_index]['scores']
-                eye_img = return_eye_img(image, face_kp)
+                eye_img = trim_eye_img(image, face_kp)
                 # show face vector
                 if show_vector:
                     vector_p1, vector_p2, vector = calculate_face_vector(face_kp, (HEIGHT, WEIGHT))
