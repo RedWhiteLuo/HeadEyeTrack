@@ -1,3 +1,4 @@
+import random
 import cv2
 import numpy as np
 import pyautogui
@@ -8,28 +9,26 @@ from torch import nn
 from torch.nn import Conv2d, MaxPool2d, Flatten, Sequential, ReLU, Linear, LeakyReLU, Dropout
 from torch.utils.tensorboard import SummaryWriter
 from win32api import GetSystemMetrics
-
 from FaceLandmark.core.api.facer import FaceAna
-from Facelandmark import return_eye_img
-from Tools.DataLoader import DataLoader
+from facelandmark import return_eye_img
+from Tools.dataloader import EpochDataLoader
 from Tools.kalman_filter import Kalman
+
+
+def draw_rect(coords):
+    dcObj.Rectangle((coords[0] - 3, coords[1] - 3, coords[0] + 3, coords[1] + 3))
+    win32gui.InvalidateRect(hwnd, monitor, True)  # Refresh the entire monitor
+
 
 dc = win32gui.GetDC(0)
 dcObj = win32ui.CreateDCFromHandle(dc)
 hwnd = win32gui.WindowFromPoint((0, 0))
 monitor = (0, 0, GetSystemMetrics(0), GetSystemMetrics(1))
 
-
-def draw_rect(coords):
-    dcObj.Rectangle((coords[0]-3, coords[1]-3, coords[0] + 3, coords[1] + 3))
-    win32gui.InvalidateRect(hwnd, monitor, True)  # Refresh the entire monitor
-
-
 facer = FaceAna()
 vide_capture = cv2.VideoCapture(0)
 pyautogui.PAUSE = 0
 pyautogui.FAILSAFE = False
-saved_img_index = 0
 kmf = Kalman()
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -55,14 +54,14 @@ class EyeTrackModelStruct(nn.Module):
         super().__init__()
         self.model = Sequential(
             # in-> [N, 3, 32, 128]
-            Conv2d(3, 20, kernel_size=(5, 5), padding=2),  # keep W H
+            Conv2d(3, 20, kernel_size=(5, 5), padding=2),
             LeakyReLU(),
-            #   -> [N, 20, 32, 128] #
+            #   -> [N, 20, 32, 128]
             MaxPool2d(kernel_size=(2, 2), stride=(2, 2)),
-            #   -> [N, 20, 16, 64]  #
-            Conv2d(20, 20, kernel_size=(5, 5), padding=2),  # keep W H
+            #   -> [N, 20, 16, 64]
+            Conv2d(20, 20, kernel_size=(5, 5), padding=2),
             LeakyReLU(),
-            Conv2d(20, 10, kernel_size=(3, 3), padding=1),  # keep W H
+            Conv2d(20, 10, kernel_size=(3, 3), padding=1),
             ReLU(),
             #   -> [N, 10, 16, 64]
             Flatten(1, 3),
@@ -73,52 +72,46 @@ class EyeTrackModelStruct(nn.Module):
         )
 
     def forward(self, x):
-        x = self.model(x)
-        return x
+        return self.model(x)
 
 
 def train():
-    train_img, train_coords = DataLoader('E:/AI_Dataset/0Project/HeadEyeTrack', batch_size=512)
+    train_img, train_coords = EpochDataLoader('E:/AI_Dataset/0Project/HeadEyeTrack', batch_size=512)
     batch_num = train_img.size()[0]
     learn_step, epoch_num, trained_batch_num = 0.01, 500, 0
-    model = EyeTrackModelStruct().to(device)
-    model.train()
+    model = EyeTrackModelStruct().to(device).train()
     loss = torch.nn.MSELoss()
     optim = torch.optim.SGD(model.parameters(), lr=learn_step)
     writer = SummaryWriter('./logs')
-    try:
-        for epoch in range(epoch_num):
-            for batch in range(batch_num):
-                batch_img = train_img[batch].to(device)
-                batch_coords = train_coords[batch].to(device)
-                # infer and calculate loss
-                outputs = model(batch_img)
-                result_loss = loss(outputs, batch_coords)
-                # reset grad and calculate grad then optim model
-                optim.zero_grad()
-                result_loss.backward()
-                optim.step()
-                # save loss and print info
-                trained_batch_num += 1
-                writer.add_scalar("loss", result_loss.item(), trained_batch_num)
-                print(epoch + 1, trained_batch_num, result_loss.item())
-            if epoch//5 == 0:
-                torch.save(model, "ET-" + str(epoch) + ".pt")
-    except KeyboardInterrupt:
-        pass
+    for epoch in range(epoch_num):
+        for batch in range(batch_num):
+            batch_img = train_img[batch].to(device)
+            batch_coords = train_coords[batch].to(device)
+            # infer and calculate loss
+            outputs = model(batch_img)
+            result_loss = loss(outputs, batch_coords)
+            # reset grad and calculate grad then optim model
+            optim.zero_grad()
+            result_loss.backward()
+            optim.step()
+            # save loss and print info
+            trained_batch_num += 1
+            writer.add_scalar("loss", result_loss.item(), trained_batch_num)
+            print(epoch + 1, trained_batch_num, result_loss.item())
+        if epoch // 5 == 0:
+            torch.save(model, "ET-" + str(epoch) + ".pt")
     # save model
     torch.save(model, "ET-last.pt")
     writer.close()
-    print("[Finish!] model saved!")
+    print("[SUCCEED!] model saved!")
 
 
 def run():
-    model = torch.load("ET-last.pt")
-    model.eval()
+    model = torch.load("ET-last.pt").eval()
     torch.no_grad()
     while True:
         img = get_eye_img()
-        if img:
+        if img is not None:
             img = np.array(img)
             img = torch.from_numpy(img).float()
             img = img.to(device)
@@ -127,7 +120,9 @@ def run():
             y = int(outputs_[0][1] * 1080)
             (x, y) = kmf.Position_Predict(x, y)
             draw_rect([int(x), int(y)])
+        else:
+            print("[ERROR] something wrong when trying to get eye img")
 
 
 if __name__ == '__main__':
-    run()
+    train()

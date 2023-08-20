@@ -43,7 +43,7 @@ def run(
         flip_img=False,
         show_vector=False,
         draw_points=False,
-        show_img=True,
+        show_img=False,
         show_eye=False,
         save_dataset=False,
 ):
@@ -63,12 +63,12 @@ def run(
             for face_index in range(len(result)):
                 face_kp, face_kp_score = result[face_index]['kps'], result[face_index]['scores']
                 eye_img = return_eye_img(image, face_kp)
+                # show face vector
                 if show_vector:
-                    # show face vector
                     vector_p1, vector_p2, vector = calculate_face_vector(face_kp, (HEIGHT, WEIGHT))
                     cv2.line(image, vector_p1, vector_p2, (0, 0, 255), 3)
                     # cv2.putText(image, str(vector), (20, 460), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
-                # process key points data
+                # draw key points
                 if draw_points:
                     for landmarks_index in range(face_kp.shape[0]):
                         kp_coords = face_kp[landmarks_index]
@@ -76,6 +76,7 @@ def run(
                         # mark key points in img and define color depend on score
                         color = (0, 255, 0) if kp_score > 0.85 else (0, 0, 255)
                         cv2.circle(image, (kp_coords[0], kp_coords[1]), color=color, radius=2, thickness=2)
+                # show eye img separately
                 if show_eye:
                     cv2.imshow('eye_img', eye_img)
                     cv2.waitKey(1)
@@ -85,7 +86,7 @@ def run(
                     save_img_and_coords(eye_img, cursor_coords, saved_img_index)
                     saved_img_index += 1
             # show img
-            if show_img:
+            if show_img or show_vector or draw_points:
                 pic = cv2.resize(image, (960, 540), interpolation=cv2.INTER_CUBIC)
                 cv2.imshow("capture", pic)
                 cv2.waitKey(1)
