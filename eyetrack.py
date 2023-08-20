@@ -90,7 +90,7 @@ def train():
             # infer and calculate loss
             outputs = model(batch_img)
             result_loss = loss(outputs, batch_coords)
-            # reset grad and calculate grad then optim model
+            # reset grad and calculate grad then optim Model
             optim.zero_grad()
             result_loss.backward()
             optim.step()
@@ -100,14 +100,14 @@ def train():
             print(epoch + 1, trained_batch_num, result_loss.item())
         if epoch // 5 == 0:
             torch.save(model, "ET-" + str(epoch) + ".pt")
-    # save model
-    torch.save(model, "ET-last.pt")
+    # save Model
+    torch.save(model, "Model/ET-last.pt")
     writer.close()
-    print("[SUCCEED!] model saved!")
+    print("[SUCCEED!] Model saved!")
 
 
 def run():
-    model = torch.load("ET-last.pt").eval()
+    model = torch.load("Model/ET-last.pt").eval()
     torch.no_grad()
     while True:
         img = get_eye_img()

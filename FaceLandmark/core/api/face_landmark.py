@@ -78,7 +78,7 @@ class FaceLandmark:
         # crop the face
         bbox = bbox.astype(np.int32)
         crop_image = border_img[bbox[1]:bbox[3], bbox[0]:bbox[2], :]
-        # resize the face img to model require
+        # resize the face img to Model require
         h, w, _ = crop_image.shape
         crop_image = cv2.resize(crop_image, (self.input_size[1], self.input_size[0]))
 

@@ -39,11 +39,11 @@ class FaceDetector:
 
     def preprocess(self, image, color=(114, 114, 114)):
         origin_img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        # resize origin img to model input required size
+        # resize origin img to Model input required size
         h, w, c = origin_img.shape
         scale = min(self.input_size[0] / h, self.input_size[1] / w)
         resize_img = cv2.resize(origin_img, (int(w * scale), int(h * scale)))
-        # fill img if ratio not fit model
+        # fill img if ratio not fit Model
         h, w, c = resize_img.shape
         dh = (self.input_size[0] - h) / 2
         dw = (self.input_size[1] - w) / 2

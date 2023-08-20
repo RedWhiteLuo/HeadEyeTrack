@@ -8,8 +8,8 @@ from sklearn.metrics import mean_squared_error
 from openvino.runtime import Core, serialize  # serialize actually exist
 
 DATASET_PATH = "E:/AI_Dataset/0Project/HeadEyeTrack/"
-INPUT_MODEL_PATH = "ET-last-FP32.xml"
-OUTPUT_MODEL_PATH = "ET-last-INT8.xml"
+INPUT_MODEL_PATH = "Model/ET-last-FP32.xml"
+OUTPUT_MODEL_PATH = "Model/ET-last-INT8.xml"
 
 
 def create_data_source(path=None, with_annot=False):
@@ -53,7 +53,7 @@ def transform_fn_with_annot(data_item):
 
 def validate(model, validation_loader) -> float:
     """
-    :param model: model that need to be quantized
+    :param model: Model that need to be quantized
     :param validation_loader: the func 'create_data_source(path=None, with_annot=True)', return (image, target) in 'for'
     :return: float MSE between annot and predict
     """
@@ -75,11 +75,11 @@ def basic_quantization():
     # set the parameter of how to quantize
     subset_size = 1000
     preset = nncf.QuantizationPreset.PERFORMANCE  # or you can choose: nncf.QuantizationPreset.MIXED
-    # load model
+    # load Model
     ov_model = Core().read_model(INPUT_MODEL_PATH)
     # perform quantize
     quantized_model = nncf.quantize(ov_model, nncf_calibration_dataset, preset=preset, subset_size=subset_size)
-    # save model
+    # save Model
     serialize(quantized_model, OUTPUT_MODEL_PATH)
 
 
@@ -89,7 +89,7 @@ def accuracy_quantization():
     validation_source = create_data_source(with_annot=True)
     calibration_dataset = nncf.Dataset(calibration_source, transform_fn)
     validation_dataset = nncf.Dataset(validation_source, transform_fn_with_annot)
-    # load model
+    # load Model
     ov_model = Core().read_model(INPUT_MODEL_PATH)
     # perform quantize
     quantized_model = nncf.quantize_with_accuracy_control(ov_model,
@@ -97,7 +97,7 @@ def accuracy_quantization():
                                                           validation_dataset=validation_dataset,
                                                           validation_fn=validate,
                                                           max_drop=0.01)
-    # save model
+    # save Model
     serialize(quantized_model, OUTPUT_MODEL_PATH)
 
 

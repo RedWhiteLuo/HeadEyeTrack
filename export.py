@@ -6,7 +6,7 @@ from eyetrack import EyeTrackModelStruct
 
 
 def run():
-    model = torch.load('ET-last.pt', map_location=torch.device('cpu')).eval()
+    model = torch.load('Model/ET-last.pt', map_location=torch.device('cpu')).eval()
     print(model)
     dummy_input = torch.randn(1, 3, 32, 128, device='cpu')
     torch.onnx.export(model, dummy_input, "ET-last.onnx", export_params=True)

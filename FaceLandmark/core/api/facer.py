@@ -36,7 +36,7 @@ class FaceAna:
         self.iou_thres = cfg['Trace']['iou_thres']
         self.alpha = cfg['Trace']['smooth_box']
         self.filter = EmaFilter(self.alpha)
-        # logger.info('model init done!')
+        # logger.info('Model init done!')
 
     def run(self, image: object):
         """
