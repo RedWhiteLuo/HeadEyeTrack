@@ -44,7 +44,7 @@ class FaceLandmark:
 
         if len(bboxes) > 0:
             duration = time.perf_counter() - t0
-            print('[Keypoint] %.5fs per face' % (duration / len(bboxes)))
+            print('[INFO] | detect keypoint %.5fs per face' % (duration / len(bboxes)))
 
         return np.array(landmark_result), np.array(states_result)
 

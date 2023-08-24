@@ -22,6 +22,11 @@ def return_boundary(eye_bbox):
 
 
 def trim_eye_img(image, face_kp):
+    """
+    :param image: img
+    :param face_kp: face key points
+    :return: eye img after concatenated [H W C]
+    """
     l_l, l_r, l_t, l_b = return_boundary(face_kp[60:68])
     r_l, r_r, r_t, r_b = return_boundary(face_kp[68:76])
     left_eye_img = image[int(l_t):int(l_b), int(l_l):int(l_r)]

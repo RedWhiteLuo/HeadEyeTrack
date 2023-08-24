@@ -5,6 +5,11 @@ import torch
 
 
 def EpochDataLoader(path, batch_size=64):
+    """
+    :param path: dataset path
+    :param batch_size: batch_size
+    :return: [M, batch_size, C, H, W], [M, batch_size, 1, 2] （images / coords）
+    """
     epoch_img, epoch_coords = [], []
     all_file_name = os.listdir(path)  # get all file name -> list
     file_num = len(all_file_name)

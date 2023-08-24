@@ -2,7 +2,7 @@ import nncf
 import torch
 import openvino.tools.mo as mo
 from openvino.runtime import Core, serialize  # serialize actually works
-from EyeTrack.core.eyetrack import EyeTrackModel
+from EyeTrack.core.eye_track_model import EyeTrackModel
 from Tools.dataloader import create_data_source
 from Tools.process_data import transform_fn, transform_fn_with_annot, validate
 
@@ -13,7 +13,7 @@ def basic_quantization(input_model_path):
     nncf_calibration_dataset = nncf.Dataset(data_source, transform_fn)
     # set the parameter of how to quantize
     subset_size = 1000
-    preset = nncf.QuantizationPreset.PERFORMANCE  # or you can choose: nncf.QuantizationPreset.MIXED
+    preset = nncf.QuantizationPreset.MIXED  # or you can choose: nncf.QuantizationPreset.MIXED
     # load model
     ov_model = Core().read_model(input_model_path)
     # perform quantize
@@ -52,7 +52,7 @@ def export_onnx(model_path, if_fp16=False):
     model_path = model_path.split(".")[0]
     dummy_input = torch.randn(1, 3, 32, 128, device='cpu')
     torch.onnx.export(model, dummy_input, model_path + ".onnx", export_params=True)
-    model = mo.convert_model(model_path + ".onnx", compress_to_fp16=if_fp16)  # FP32
+    model = mo.convert_model(model_path + ".onnx", compress_to_fp16=if_fp16)  # if_fp16=False, output = FP32
     serialize(model, model_path + ".xml")
     print(EyeTrackModel(), "\n[FINISHED] CONVERT DONE!")
     return model_path + ".xml"

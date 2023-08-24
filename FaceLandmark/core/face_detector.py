@@ -33,7 +33,7 @@ class FaceDetector:
         bboxes = self.py_nms(output, self.iou_thrs, self.score_thrs)
         bboxes[:, :4] = self.scale_coords(bboxes[:, :4], recover_info)
         duration = time.perf_counter() - start_time
-        print('[Face] Total time: %.5fs' % duration)
+        print('[INFO] | Detect Face total time: %.5fs' % duration)
         return bboxes
 
     def preprocess(self, image, color=(114, 114, 114)):
@@ -57,7 +57,8 @@ class FaceDetector:
 
         return img, [scale, left, top]
 
-    def xywh2xyxy(self, x):
+    @staticmethod
+    def xywh2xyxy(x):
         # Convert nx4 boxes from [x, y, w, h] to [x1, y1, x2, y2] where xy1=top-left, xy2=bottom-right
         y = np.copy(x)
         y[:, 0] = x[:, 0] - x[:, 2] / 2  # top left x
@@ -67,7 +68,8 @@ class FaceDetector:
 
         return y
 
-    def scale_coords(self, bbox, revocer_info):
+    @staticmethod
+    def scale_coords(bbox, revocer_info):
         # Rescale coords (xyxy) from img1_shape to img0_shape
         [scale, dx, dy] = revocer_info
 
@@ -80,7 +82,8 @@ class FaceDetector:
 
         return bbox
 
-    def py_nms(self, bboxes, iou_thres, score_thres):
+    @staticmethod
+    def py_nms(bboxes, iou_thres, score_thres):
 
         upper_thres = np.where(bboxes[:, 4] > score_thres)[0]
         bboxes = bboxes[upper_thres]
