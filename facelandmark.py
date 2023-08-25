@@ -23,8 +23,8 @@ def run(
         show_eye=False,
         save_dataset=False,
 ):
+    saved_img_index = 0
     while True:
-        saved_img_index = 0
         ret, image = vide_capture.read()
         image = cv2.flip(image, 1) if flip_img else image
         if ret:
@@ -43,7 +43,7 @@ def run(
                 if show_vector:
                     vector_p1, vector_p2, vector = calculate_face_vector(face_kp, (HEIGHT, WEIGHT))
                     cv2.line(image, vector_p1, vector_p2, (0, 0, 255), 3)
-                    # cv2.putText(image, str(vector), (20, 460), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
+                    print(vector, vector[0])
                 # draw key points
                 if draw_points:
                     for landmarks_index in range(face_kp.shape[0]):

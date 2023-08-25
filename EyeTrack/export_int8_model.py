@@ -59,11 +59,11 @@ def export_onnx(model_path, if_fp16=False):
 
 
 if __name__ == "__main__":
-    # convert pt model to onnx and xml format
+    # convert pt model to onnx and xml format在·
     pt_model_path = 'model/ET-last.pt'
     xml_model_path = export_onnx(pt_model_path)
     #
-    DATASET_ROOT_PATH = "E:/AI_Dataset/0Project/HeadEyeTrack/"
+    DATASET_ROOT_PATH = "../dataset/"   # must end with '/'
     # quantize model
     basic_quantization(xml_model_path)
-    accuracy_quantization(xml_model_path, max_drop=0.01)
+    accuracy_quantization(xml_model_path, max_drop=0.001)

@@ -9,8 +9,9 @@ def save_img_and_coords(img, coords, saved_img_index):
     saved_img_index += 1
 
 
-def return_boundary(eye_bbox):
+def return_boundary(eye_bbox, bounding=0):
     """
+    :param bounding:
     :param eye_bbox:
     :return:
     """
@@ -18,7 +19,7 @@ def return_boundary(eye_bbox):
     min_index = np.argmin(eye_bbox, axis=0)
     left, top = eye_bbox[min_index[0]][0], eye_bbox[min_index[1]][1]
     right, down = eye_bbox[max_index[0]][0], eye_bbox[max_index[1]][1]
-    return left - 2, right + 2, top - 2, down + 2
+    return left - bounding, right + bounding, top - bounding * 4, down + bounding
 
 
 def trim_eye_img(image, face_kp):
@@ -27,8 +28,8 @@ def trim_eye_img(image, face_kp):
     :param face_kp: face key points
     :return: eye img after concatenated [H W C]
     """
-    l_l, l_r, l_t, l_b = return_boundary(face_kp[60:68])
-    r_l, r_r, r_t, r_b = return_boundary(face_kp[68:76])
+    l_l, l_r, l_t, l_b = return_boundary(face_kp[60:68], bounding=2)
+    r_l, r_r, r_t, r_b = return_boundary(face_kp[68:76], bounding=2)
     left_eye_img = image[int(l_t):int(l_b), int(l_l):int(l_r)]
     right_eye_img = image[int(r_t):int(r_b), int(r_l):int(r_r)]
     left_eye_img = cv2.resize(left_eye_img, (64, 32), interpolation=cv2.INTER_AREA)

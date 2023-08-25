@@ -1,4 +1,6 @@
 import os
+import random
+
 import cv2
 import numpy as np
 import torch
@@ -52,3 +54,23 @@ def create_data_source(path, with_annot=False):
         else:
             data.append(torch.tensor(img))
     return data
+
+
+class SingleSampleLoader:
+    def __init__(self, path, if_random):
+        self.all_files = os.listdir(path)
+        if len(self.all_files) < 1:
+            raise ValueError('empty path')
+        self.random = if_random
+        self.index = -1
+
+    def __call__(self):
+        if self.random:
+            num = random.randint(0, len(self.all_files))
+        else:
+            self.index += 1
+            num = self.index
+        file_name = self.all_files[num]
+        img = cv2.imread(file_name)
+        coords = [int(file_name.split('_')[1]) / 1920, int(file_name.split('_')[2][:-4]) / 1080]
+        return img, coords

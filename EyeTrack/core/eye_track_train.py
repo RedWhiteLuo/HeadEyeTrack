@@ -2,6 +2,7 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 from EyeTrack.core.eye_track_model import EyeTrackModel
 from Tools.dataloader import EpochDataLoader
+
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 
@@ -31,8 +32,8 @@ def eye_track_train():
             writer.add_scalar("loss", result_loss.item(), trained_batch_num)
             print("[INFO]: trained epoch num | trained batch num | loss "
                   , epoch + 1, trained_batch_num, result_loss.item())
-        if epoch // 10 == 0:
-            torch.save(model, "../model/ET-" + str(epoch) + ".pt")
+        # if epoch // 50 == 0:
+        #     torch.save(model, "../model/ET-" + str(epoch) + ".pt")
     # save model
     torch.save(model, "../model/ET-last.pt")
     writer.close()
@@ -40,9 +41,9 @@ def eye_track_train():
 
 
 if __name__ == "__main__":
-    TRAIN_DATASET_PATH = 'E:/AI_Dataset/0Project/HeadEyeTrack'
+    TRAIN_DATASET_PATH = 'D:/0_AI_Learning/HeadEyeTrack/dataset'
     LOG_SAVE_PATH = '../train_logs'
-    TRAIN_BATCH_SIZE = 512
-    LEARN_STEP = 0.001
-    TRAIN_EPOCH = 500
+    TRAIN_BATCH_SIZE = 256
+    LEARN_STEP = 0.01
+    TRAIN_EPOCH = 1500
     eye_track_train()
